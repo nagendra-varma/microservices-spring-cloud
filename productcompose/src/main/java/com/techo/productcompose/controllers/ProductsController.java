@@ -1,13 +1,12 @@
 package com.techo.productcompose.controllers;
 
 import com.google.common.annotations.VisibleForTesting;
+import com.netflix.hystrix.contrib.javanica.annotation.HystrixCommand;
 import com.techo.productcompose.exceptions.ProductNotExistsException;
 import com.techo.productcompose.exceptions.ServerUnSuccessfulResponseException;
 import com.techo.productcompose.model.Product;
 import com.techo.productcompose.model.Review;
 import com.techo.productcompose.services.ProductComposeService;
-import com.techo.productcompose.services.product.ProductAPIService;
-import com.techo.productcompose.services.reviews.ReviewAPIService;
 import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -17,10 +16,12 @@ import org.springframework.web.client.HttpClientErrorException;
 
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
-import java.util.List;
 
 import static com.techo.productcompose.helpers.ServerResponseParseHelper.isSuccess;
 import static org.slf4j.LoggerFactory.getLogger;
+import static org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR;
+import static org.springframework.http.ResponseEntity.ok;
+import static org.springframework.http.ResponseEntity.status;
 
 @RestController
 @RequestMapping("/products")
@@ -31,9 +32,14 @@ public class ProductsController {
     @Autowired
     private ProductComposeService productComposeService;
 
+    @HystrixCommand(commandKey = "productcompose", fallbackMethod = "getAllProductsFallback")
     @GetMapping
-    public List<Product> getProduct() {
+    public ResponseEntity getAllProducts() {
         return productComposeService.getAllProducts();
+    }
+
+    public ResponseEntity getAllProductsFallback() {
+        return status(INTERNAL_SERVER_ERROR).body("Some of the services are unavailable");
     }
 
     @PostMapping
@@ -48,9 +54,14 @@ public class ProductsController {
         return productComposeService.addReview(review);
     }
 
+    @HystrixCommand(commandKey = "productcompose", fallbackMethod = "getProductFallback")
     @GetMapping("/{id}")
-    public Product getProduct(@PathVariable("id") Long id) {
-        return productComposeService.getProductWithReview(id);
+    public ResponseEntity getProduct(@PathVariable("id") Long id) {
+        return ok(productComposeService.getProductWithReview(id));
+    }
+
+    public ResponseEntity getProductFallback(@PathVariable("id") Long id) {
+        return status(INTERNAL_SERVER_ERROR).body("Some of the services are unavailable");
     }
 
     private void ensureProductExists(Long id) {
@@ -63,7 +74,6 @@ public class ProductsController {
     @ExceptionHandler(HttpClientErrorException.class)
     @VisibleForTesting
     public void httpClientErrorExceptionHandler(HttpClientErrorException e, HttpServletResponse response) throws IOException {
-        LOG.error("Error while making request to other services, message - " + e.getMessage());
         response.sendError(HttpStatus.BAD_REQUEST.value(), e.getResponseBodyAsString());
     }
 

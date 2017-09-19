@@ -2,9 +2,9 @@ package com.techo.reviewservice.controller;
 
 import com.techo.reviewservice.model.Review;
 import com.techo.reviewservice.service.ReviewService;
+import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletResponse;
@@ -13,6 +13,7 @@ import javax.validation.Valid;
 import java.io.IOException;
 import java.util.List;
 
+import static org.slf4j.LoggerFactory.getLogger;
 import static org.springframework.http.HttpStatus.BAD_REQUEST;
 import static org.springframework.http.HttpStatus.CREATED;
 import static org.springframework.http.ResponseEntity.notFound;
@@ -21,6 +22,8 @@ import static org.springframework.http.ResponseEntity.ok;
 @RestController
 @RequestMapping("/reviews")
 public class ReviewsController {
+
+    private static final Logger LOG = getLogger(ReviewsController.class);
 
     @Autowired
     private ReviewService reviewService;

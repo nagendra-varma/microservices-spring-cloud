@@ -1,0 +1,17 @@
+server:
+  port: 0
+
+hystrix:
+    threadpool:
+       default:
+          coreSize : 3
+          maxQueueSize : -1
+    command:
+        default:
+            circuitbreaker:
+               sleepWindowInMilliSeconds: 10000
+               requestVolumeThreshold: 2
+            execution:
+                isolation:
+                    thread:
+                        timeoutInMilliseconds: 3000

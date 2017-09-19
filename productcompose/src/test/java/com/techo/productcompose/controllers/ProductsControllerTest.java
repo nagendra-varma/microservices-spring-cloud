@@ -4,8 +4,8 @@ package com.techo.productcompose.controllers;
 import com.techo.productcompose.ProductComposeApplication;
 import com.techo.productcompose.model.Product;
 import com.techo.productcompose.model.Review;
-import com.techo.productcompose.services.product.ProductAPIService;
-import com.techo.productcompose.services.reviews.ReviewAPIService;
+import com.techo.productcompose.services.product.ProductAPIServiceClient;
+import com.techo.productcompose.services.reviews.ReviewAPIServiceClient;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -29,7 +29,6 @@ import static org.springframework.http.HttpStatus.BAD_REQUEST;
 import static org.springframework.http.MediaType.APPLICATION_JSON;
 import static org.springframework.http.ResponseEntity.notFound;
 import static org.springframework.http.ResponseEntity.ok;
-import static org.springframework.http.ResponseEntity.status;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
@@ -44,10 +43,10 @@ public class ProductsControllerTest {
     private WebApplicationContext webApplicationContext;
 
     @MockBean
-    private ProductAPIService productAPIService;
+    private ProductAPIServiceClient productAPIServiceClient;
 
     @MockBean
-    private ReviewAPIService reviewAPIService;
+    private ReviewAPIServiceClient reviewAPIServiceClient;
 
     private MockMvc mockMvc;
 
@@ -59,7 +58,7 @@ public class ProductsControllerTest {
     @Test
     public void shouldCreateProduct() throws Exception {
         Product product = getProductWithReviews();
-        when(productAPIService.createProduct(any(Product.class))).thenReturn(ok(product));
+        when(productAPIServiceClient.createProduct(any(Product.class))).thenReturn(ok(product));
         mockMvc.perform(post("/products")
                 .contentType(APPLICATION_JSON)
                 .content(product.toJson()))
@@ -71,7 +70,7 @@ public class ProductsControllerTest {
     public void shouldForwardTheSameErrorFromAPIServiceToClient() throws Exception {
         Product product = getProductWithReviews();
         product.setName(null);
-        when(productAPIService.createProduct(any(Product.class)))
+        when(productAPIServiceClient.createProduct(any(Product.class)))
                 .thenThrow(new HttpClientErrorException(BAD_REQUEST, "Product name should not be null"));
         mockMvc.perform(post("/products")
                 .contentType(APPLICATION_JSON)
@@ -82,7 +81,7 @@ public class ProductsControllerTest {
     @Test
     public void shouldReturnAllProductsWithReviews() throws Exception {
         Product product = getProductWithReviews();
-        when(productAPIService.getAllProducts()).thenReturn(Arrays.asList(product));
+        when(productAPIServiceClient.getAllProducts()).thenReturn(Arrays.asList(product));
         mockMvc.perform(get("/products")
                 .contentType(APPLICATION_JSON))
                 .andExpect(status().isOk())
@@ -92,8 +91,8 @@ public class ProductsControllerTest {
     @Test
     public void shouldReturnTheRequestProductWithReviews() throws Exception {
         Product product = getProductWithReviews();
-        when(productAPIService.getProduct(1L)).thenReturn(ok(product));
-        when(reviewAPIService.getReviews(1L)).thenReturn(product.getReviews());
+        when(productAPIServiceClient.getProduct(1L)).thenReturn(ok(product));
+        when(reviewAPIServiceClient.getReviews(1L)).thenReturn(product.getReviews());
         mockMvc.perform(get("/products/1")
                 .contentType(APPLICATION_JSON))
                 .andExpect(status().isOk())
@@ -105,14 +104,14 @@ public class ProductsControllerTest {
         Review review = getReviewOne();
         review.setProductId(1L);
         ResponseEntity<Review> responseEntity = ResponseEntity.ok(review);
-        when(reviewAPIService.addReview(review)).thenReturn(responseEntity);
-        when(productAPIService.getProduct(1L)).thenReturn(ok(mock(Product.class)));
+        when(reviewAPIServiceClient.addReview(review)).thenReturn(responseEntity);
+        when(productAPIServiceClient.getProduct(1L)).thenReturn(ok(mock(Product.class)));
         mockMvc.perform(post("/products/1/reviews")
                 .contentType(APPLICATION_JSON)
                 .content(review.toJson()))
                 .andExpect(status().isOk());
         ArgumentCaptor<Review> argumentCaptor = ArgumentCaptor.forClass(Review.class);
-        verify(reviewAPIService).addReview(argumentCaptor.capture());
+        verify(reviewAPIServiceClient).addReview(argumentCaptor.capture());
         reflectionEquals(argumentCaptor.getValue(), review);
     }
 
@@ -121,14 +120,14 @@ public class ProductsControllerTest {
         Review review = getReviewOne();
         review.setProductId(1L);
         ResponseEntity<Review> responseEntity = ResponseEntity.ok(review);
-        when(reviewAPIService.addReview(review)).thenReturn(responseEntity);
+        when(reviewAPIServiceClient.addReview(review)).thenReturn(responseEntity);
         ResponseEntity<Product> notFound = notFound().build();
-        when(productAPIService.getProduct(1L)).thenReturn(notFound);
+        when(productAPIServiceClient.getProduct(1L)).thenReturn(notFound);
         mockMvc.perform(post("/products/1/reviews")
                 .contentType(APPLICATION_JSON)
                 .content(review.toJson()))
                 .andExpect(status().isNotFound());
-        verifyNoMoreInteractions(reviewAPIService);
+        verifyNoMoreInteractions(reviewAPIServiceClient);
     }
 
     private Product getProductWithReviews() {

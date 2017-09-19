@@ -3,8 +3,8 @@ package com.techo.productcompose.services;
 import com.techo.productcompose.exceptions.ServerUnSuccessfulResponseException;
 import com.techo.productcompose.model.Product;
 import com.techo.productcompose.model.Review;
-import com.techo.productcompose.services.product.ProductAPIService;
-import com.techo.productcompose.services.reviews.ReviewAPIService;
+import com.techo.productcompose.services.product.ProductAPIServiceClient;
+import com.techo.productcompose.services.reviews.ReviewAPIServiceClient;
 import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -17,6 +17,7 @@ import java.util.stream.Collectors;
 import static com.techo.productcompose.helpers.ServerResponseParseHelper.ensureSuccessResponse;
 import static com.techo.productcompose.helpers.ServerResponseParseHelper.isSuccess;
 import static org.slf4j.LoggerFactory.getLogger;
+import static org.springframework.http.ResponseEntity.ok;
 
 @Service
 public class ProductComposeService {
@@ -24,15 +25,15 @@ public class ProductComposeService {
     private static final Logger LOG = getLogger(ProductComposeService.class);
 
     @Autowired
-    private ProductAPIService productAPIService;
+    private ProductAPIServiceClient productAPIServiceClient;
 
     @Autowired
-    private ReviewAPIService reviewAPIService;
+    private ReviewAPIServiceClient reviewAPIServiceClient;
 
-    public List<Product> getAllProducts() {
-        List<Product> products = productAPIService.getAllProducts();
-        List<Review> reviews = reviewAPIService.getAllReviews();
-        return mergeProductsAndReviews(products, reviews);
+    public ResponseEntity getAllProducts() {
+        List<Product> products = productAPIServiceClient.getAllProducts();
+        List<Review> reviews = reviewAPIServiceClient.getAllReviews();
+        return ok(mergeProductsAndReviews(products, reviews));
     }
 
     private List<Product> mergeProductsAndReviews(List<Product> products, List<Review> reviews) {
@@ -46,20 +47,21 @@ public class ProductComposeService {
     }
 
     public Product getProductWithReview(Long id) {
-        ResponseEntity<Product> productEntity = productAPIService.getProduct(id);
+        ResponseEntity<Product> productEntity = productAPIServiceClient.getProduct(id);
         ensureSuccessResponse(productEntity);
         Product product = productEntity.getBody();
-        List<Review> reviewList = reviewAPIService.getReviews(product.getId());
+        LOG.info("Got the product - " + product + ", looking for reviews");
+        List<Review> reviewList = reviewAPIServiceClient.getReviews(product.getId());
         product.setReviews(reviewList);
         return product;
     }
 
     public ResponseEntity<Product> getProduct(Long id) {
-        return productAPIService.getProduct(id);
+        return productAPIServiceClient.getProduct(id);
     }
 
     public Product createProduct(Product product) {
-        ResponseEntity productResponseEntity = productAPIService.createProduct(product);
+        ResponseEntity productResponseEntity = productAPIServiceClient.createProduct(product);
         if (isSuccess(productResponseEntity)) {
             try {
                 return Product.fromJson(productResponseEntity.getBody().toString());
@@ -73,6 +75,6 @@ public class ProductComposeService {
     }
 
     public ResponseEntity<Review> addReview(Review review) {
-        return reviewAPIService.addReview(review);
+        return reviewAPIServiceClient.addReview(review);
     }
 }

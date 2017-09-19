@@ -1,6 +1,5 @@
 package com.techo.productcompose.services.reviews;
 
-import com.techo.productcompose.services.product.ProductAPIService;
 import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cloud.client.ServiceInstance;
@@ -15,10 +14,10 @@ import static org.slf4j.LoggerFactory.getLogger;
 @Component
 public class ReviewServiceUrlProvider {
 
-    private static final Logger LOG = getLogger(ProductAPIService.class);
+    private static final Logger LOG = getLogger(ReviewServiceUrlProvider.class);
     private static final String GET_REVIEWS = "/reviews";
     private static final String GET_REVIEWS_BY_ID = "/reviews?productId=%d";
-    private static final String REST_SERVICE_NAME = "reviews-service";
+    public static final String REST_SERVICE_NAME = "reviews-service";
     public static final String DEFAULT_URL = "http://localhost:8090";
 
     @Autowired

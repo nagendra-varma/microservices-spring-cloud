@@ -2,6 +2,8 @@ package com.techo.productservice.controller;
 
 import com.techo.productservice.model.Product;
 import com.techo.productservice.service.ProductService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -12,6 +14,7 @@ import javax.validation.Valid;
 import java.io.IOException;
 import java.util.List;
 
+import static org.slf4j.LoggerFactory.getLogger;
 import static org.springframework.http.HttpStatus.*;
 import static org.springframework.http.ResponseEntity.notFound;
 import static org.springframework.http.ResponseEntity.ok;
@@ -19,6 +22,8 @@ import static org.springframework.http.ResponseEntity.ok;
 @RestController
 @RequestMapping("/products")
 public class ProductsController {
+
+    private static final Logger LOG = getLogger(ProductsController.class);
 
     @Autowired
     private ProductService productService;
